@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 project(Nivlem)
-set (CMAKE_C_FLAGS "-pthread")
+set (CMAKE_C_FLAGS "-pthread -lm")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 set(SOURCE_FILES main.c)
-add_executable(Nivlem ${SOURCE_FILES})
+add_executable(Nivlem ${SOURCE_FILES} aux/list.h aux/list.c aux/calc.h aux/calc.c)
