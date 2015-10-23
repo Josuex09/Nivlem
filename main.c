@@ -10,18 +10,16 @@
 #define WATER_MAX_RANGE 2
 #define FOOD_MIN_RANGE 3
 #define FOOD_MAX_RANGE 4
-#define EGG_MIN_RANGE 5
-#define EGG_MAX_RANGE 6
-#define WATER_POISSON 7
-#define FOOD_POISSON 8
-#define EGG_POISSON 9
-#define FOOD_MIN_ALLOWED 10
-#define FOOD_REFILL_AMOUNT 11
-#define WATER_MIN_ALLOWED 12
-#define WATER_REFILL_AMOUNT 13
-#define EGG_MAX_ALLOWED 14
-#define WATER_COST 15
-#define FOOD_COST 16
+#define WATER_POISSON 5
+#define FOOD_POISSON 6
+#define EGG_POISSON 7
+#define FOOD_MIN_ALLOWED 8
+#define FOOD_REFILL_AMOUNT 9
+#define WATER_MIN_ALLOWED 10
+#define WATER_REFILL_AMOUNT 11
+#define EGG_MAX_ALLOWED 12
+#define WATER_COST 13
+#define FOOD_COST 14
 
 
 typedef struct {  // Tipo para mantener los hilos
@@ -29,14 +27,15 @@ typedef struct {  // Tipo para mantener los hilos
 } Chickens;
 
 
-int inputs[16];
+int inputs[14];
 list_t water_distribution;
 list_t food_distribution;
 list_t egg_distribution;
 pthread_mutex_t	mutex;
 
 int food_amount,water_amount;
-int egg_amount = 0, cost = 0;
+int egg_amount = 0;
+int cost = 0;
 
 Chickens * chicken_list;
 
@@ -159,23 +158,21 @@ void * food_proc(void* id_t){
 void* chicken_process(void* id_t){
     int id = *((int *)id_t);
     int next;
-    int random;
     pthread_t food_process =(pthread_t) malloc(sizeof(pthread_t));
     pthread_t water_process =(pthread_t) malloc(sizeof(pthread_t));
 
     pthread_create(&food_process,NULL,food_proc, (void *) &id); // hilo que maneja el consumo de concentrado.
     pthread_create(&water_process,NULL,water_proc, (void *) &id); // hilo que maneja el consumo de agua.
 
-    // el proceso de los huevos se maneja en este proceso.
+    // el proceso de los huevos se maneja aqui.
     while(1){
         next = next_egg_wait();
         //printf("La gallina %d se dormira %d \n",id+1,next);
         sleep(next);
-        random = random_between(inputs[EGG_MIN_RANGE],inputs[EGG_MAX_RANGE]);
         pthread_mutex_lock(&mutex);
-        egg_amount+= random;
+        egg_amount++;
         pthread_mutex_unlock(&mutex);
-        printf("La gallina %d puso %d huevos, hay %d en la canasta\n", id+1,random,egg_amount);
+        printf("La gallina %d puso un huevo, hay %d en la canasta\n", id+1,egg_amount);
     }
 
     return NULL;
