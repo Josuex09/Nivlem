@@ -22,6 +22,7 @@
 #define FOOD_COST 14
 
 #define NIVLEM_WAIT 21600
+#define DAY_DURATION 10
 
 
 typedef struct {  // Tipo para mantener los hilos
@@ -42,9 +43,11 @@ pthread_cond_t nivlem_cond = PTHREAD_COND_INITIALIZER;
 int food_amount,water_amount;
 int egg_amount = 0;
 int cost = 0;
+int days_count = 0;
 
 Chickens * chicken_list;
 pthread_t bot_thread;
+pthread_t days_count_thread;
 
 
 void readInput(){
@@ -141,7 +144,7 @@ void * water_proc(void* id_t){
         if(water_amount <= inputs[WATER_MIN_ALLOWED])// enviar señal para aumentar la cantidad de agua y el costo
             pthread_cond_signal(&water_cond);
         pthread_mutex_unlock(&mutex);
-        printf("La gallina %d tom'o %d de agua, queda %d del mismo\n", id+1,random,water_amount);
+        printf("La gallina %d tomó %d de agua, queda %d\n", id+1,random,water_amount);
     }
     return NULL;
 }
@@ -160,7 +163,7 @@ void * food_proc(void* id_t){
         if(food_amount <= inputs[FOOD_MIN_ALLOWED]) // enviar señal para aumentar la cantidad de comida y el costo
             pthread_cond_signal(&food_cond);
         pthread_mutex_unlock(&mutex);
-        printf("La gallina %d comio %d de concentrado, queda %d del mismo\n", id+1,random,food_amount);
+        printf("La gallina %d comió %d de concentrado, queda %d\n", id+1,random,food_amount);
     }
     return NULL;
 }
@@ -210,7 +213,7 @@ void nivlemProc() {
 }
 
 void createChickens(){
-    printf("Se crearon %d gallinas\n",inputs[CHICKEN_LENGTH]);
+    //printf("Se crearon %d gallinas\n",inputs[CHICKEN_LENGTH]);
     int *id;
     chicken_list = calloc(inputs[CHICKEN_LENGTH],sizeof(pthread_t));
     int i;
@@ -229,10 +232,10 @@ void * food_bot_proc(){
         while (food_amount > inputs[FOOD_MIN_ALLOWED])
             pthread_cond_wait(&food_cond, &mutex);
 
-        printf("Se acabo el concentrado\n");
+        printf("Se agotó el concentrado\n");
         food_amount += inputs[FOOD_REFILL_AMOUNT];
         cost += inputs[FOOD_COST];
-        printf("El costo aumento a %d\n",cost);
+        printf("El costo aumentó a %d\n",cost);
         pthread_mutex_unlock(&mutex);
     }
     return NULL;
@@ -248,11 +251,22 @@ void * bot(){
         while (water_amount > inputs[WATER_MIN_ALLOWED])
             pthread_cond_wait(&water_cond, &mutex);
 
-        printf("Se acabo el agua\n");
+        printf("Se agotó el agua\n");
         water_amount += inputs[WATER_REFILL_AMOUNT];
         cost += inputs[WATER_COST];
-        printf("El costo aumento a %d\n",cost);
+        printf("El costo aumentó a %d\n",cost);
         pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
+}
+
+
+
+void * days(){
+    while(1){
+        days_count++;
+        printf("------ DÍA #%d -------\n",days_count);
+        sleep(DAY_DURATION);
     }
     return NULL;
 }
@@ -269,6 +283,7 @@ int main(){
     calcFoodDistr();
     calcEggDistr();
     //Crear el proceso del bot
+    pthread_create(&days_count_thread,NULL,&days,NULL);
     pthread_create(&bot_thread,NULL,&bot,NULL);
     // Crear un proceso para cada gallina.
     sleep(1);
